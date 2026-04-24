@@ -10,10 +10,13 @@ export async function discourseAPI(
     formData?: FormData;
   },
 ) {
-  const headers: Record<string, string> = {
-    'Api-Key': API_KEY(),
-    'Api-Username': options.username,
-  };
+  // Auth via query params instead of headers — headers reject non-ASCII
+  // usernames (Chinese, etc.) with "Cannot convert to ByteString"
+  const url = new URL(`${DISCOURSE_URL()}${path}`);
+  url.searchParams.set('api_key', API_KEY());
+  url.searchParams.set('api_username', options.username);
+
+  const headers: Record<string, string> = {};
 
   const fetchOptions: RequestInit = {
     method: options.method || 'GET',
@@ -27,7 +30,7 @@ export async function discourseAPI(
     fetchOptions.body = JSON.stringify(options.body);
   }
 
-  const res = await fetch(`${DISCOURSE_URL()}${path}`, fetchOptions);
+  const res = await fetch(url, fetchOptions);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Discourse API ${path} failed (${res.status}): ${text}`);
