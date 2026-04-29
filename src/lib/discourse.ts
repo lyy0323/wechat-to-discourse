@@ -10,13 +10,15 @@ export async function discourseAPI(
     formData?: FormData;
   },
 ) {
-  // Auth via query params instead of headers — headers reject non-ASCII
-  // usernames (Chinese, etc.) with "Cannot convert to ByteString"
+  // Api-Key MUST stay in headers — Discourse uses it to identify API
+  // requests and bypass CSRF. Username goes in query params because
+  // HTTP headers reject non-ASCII characters (Chinese usernames etc.)
   const url = new URL(`${DISCOURSE_URL()}${path}`);
-  url.searchParams.set('api_key', API_KEY());
   url.searchParams.set('api_username', options.username);
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Api-Key': API_KEY(),
+  };
 
   const fetchOptions: RequestInit = {
     method: options.method || 'GET',
